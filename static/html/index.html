@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}总资产{% endblock %}
+{% block home_active %} active {% endblock %}
+{% block body %}
+<div id="main" style="width: 100%;height:400px;"></div>
+<script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('main'));
+    var option = {
+        title: {
+            text: '{{echartsOption.title}}',
+            subtext: '最新：{{echartsOption.xAxis[-1]}}\t人民币：{{echartsOption.data[-1]}}\t日元：{{(echartsOption.data[-1] * echartsOption.fxrate)|round(2) }}'
+        },
+        tooltip: {},
+        legend: {
+            data:['人民币']
+        },
+        xAxis: {
+            data: {{echartsOption.xAxis|tojson}}
+        },
+        yAxis: {},
+        dataZoom: [
+            { startValue: '{{echartsOption.startValue}}' },
+            { type: 'inside' },
+            {
+                type: 'slider',
+                show: true,
+                yAxisIndex: [0],
+                left: '5%',
+                start:0
+            }
+        ],
+        series: [{
+            name: '人民币',
+            type: 'line',
+            data: {{echartsOption.data}}
+        }]
+    };
+    myChart.setOption(option);
+</script>
+    <table class="table table-sm text-center">
+        <thead>
+            <tr>
+                <th scope="col">日期</th>
+                <th scope="col">元</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in echartsOption.data|reverse %}
+                <tr>
+                    <th scope="row">{{echartsOption.xAxis[-loop.index]}}</th>
+                    <td>{{asset}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

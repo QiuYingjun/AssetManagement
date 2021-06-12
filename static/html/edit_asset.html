@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}资产输入{% endblock %}
+{% block edit_asset_active %} active {% endblock %}
+{% block body %}
+
+<table class="table table-sm text-center" id="asset_table">
+	<thead>
+		<tr>
+			<th scope="col">日期</th>
+			<th scope="col">账户</th>
+			<th scope="col">金额</th>
+			<th scope="col">操作</th>
+		</tr>
+	</thead>
+	<tbody>
+    	{%for id,date,accountId,amount in asset_list %}
+		<tr>
+			<td><input class="form-control" disabled type="date" form="form_{{id}}" name="date" value="{{date}}"/></td>
+			<td>
+				<select class="form-control" disabled form="form_{{id}}" name="accountId" value="{{accountId}}">
+					{% for aId, account in accounts.items() %}
+					<option {% if accountId == aId %}selected="selected"{%endif%} value="{{aId}}" label="{{account[0]}}" data-active="{{account[1]}}"/>
+					{% endfor %}
+				</select>
+			</td>
+			<td><input class="form-control" disabled type="text" form="form_{{id}}" name="amount" value="{{amount}}" /></td>
+			<td class="float-left">
+				<button onclick="$(this.parentElement.parentElement).find('button,input,select').prop('disabled', false);this.disabled=true;" class="btn btn-primary"><i class="fa fa-pencil"></i></button>
+				<button disabled type="submit" form="form_{{id}}" name="method" value="save" class="btn btn-success"><i class="fa fa-save"></i></button>
+				<button type="submit" form="form_{{id}}" name="method" value="delete" class="btn btn-danger"><i class="fa fa-remove"></i></button>
+                {%if loop.index0 == 0%}
+				<button type="button" class="btn btn-info" onclick="insertLine(this)"><i class="fa fa-plus"></i></button>
+				{%endif%}
+				<input type="hidden" form="form_{{id}}" name="id" value="{{id}}">
+				<form id="form_{{id}}" action="/edit_asset" method="POST"></form>
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+<script>
+	function insertLine(ele) {
+		var timestamp = new Date().getTime();
+		var form_id = "form_" + timestamp;
+		var table = document.getElementById("asset_table");
+		var row = ele.parentElement.parentElement.cloneNode(true);
+		table.insertAdjacentElement('afterbegin', row);
+
+		var cell0 = row.children[0]; // 日期
+		var cell1 = row.children[1]; // 账户
+		var cell2 = row.children[2]; // 金额
+		var cell3 = row.children[3]; // 操作
+
+		// 日期
+		var input0 = cell0.firstElementChild;
+		input0.setAttribute("form", form_id);
+		input0.disabled = false;
+		var today = new Date();
+		input0.value = today.toISOString().slice(0, 10);
+		// 账户
+		var select = cell1.firstElementChild;
+		select.setAttribute("form", form_id);
+		select.disabled = false;
+		for(var i=select.children.length-1;i >= 0; i--) {
+			var op = select.children[i];
+			if (op.dataset.active == "False") {
+				select.removeChild(op);
+			}
+		}
+		// 金额
+		var input2 = cell2.firstElementChild;
+		input2.setAttribute("form", form_id);
+		input2.disabled = false;
+		input2.value='';
+		// 操作
+		$(cell3).find('button, input').attr('form', form_id);
+		$(cell3).find('input').attr('value', "");
+		cell3.lastElementChild.id = form_id;
+		cell3.firstElementChild.disabled = true;
+		cell3.firstElementChild.setAttribute("form", "");
+		cell3.children[1].disabled = false;
+	}
+</script>
+{% endblock %}

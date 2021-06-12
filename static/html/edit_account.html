@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}账户管理{% endblock %}
+{% block edit_account_active %} active {% endblock %}
+{% block body %}
+
+<table class="table table-sm text-center" id="fxrate_table">
+	<thead>
+		<tr>
+			<th scope="col">账户名</th>
+			<th scope="col">币种</th>
+			<th scope="col">活跃中</th>
+			<th scope="col">操作</th>
+		</tr>
+	</thead>
+	<tbody>
+    	{%for id,name,currency,is_active in account_list %}
+		<tr>
+			<td><input class="form-control" disabled type="text" form="form_{{id}}" name="name" value="{{name}}"/></td>
+			<td><input class="form-control" disabled type="text" form="form_{{id}}" name="currency" value="{{currency}}"/></td>
+			<td class="align-middle">
+				<input data-toggle="toggle" data-size="xs" disabled id="checkbox_{{id}}"  type="checkbox" form="form_{{id}}" name="is_active" {%if is_active%}checked{%endif%}/>
+			</td>
+			<td class="float-left">
+				<button onclick="enable(this)" class="btn btn-primary"><i class="fa fa-pencil"></i></button>
+				<script>
+					function enable(ele) {
+						$(ele.parentElement.parentElement).find('div,button,input,select').prop('disabled', false);
+						$(ele.parentElement.parentElement).find('div,button,input,select').removeClass('disabled');
+						ele.disabled=true;
+					}
+				</script>
+				<button disabled type="submit" form="form_{{id}}" name="method" value="save" class="btn btn-success"><i class="fa fa-save"></i></button>
+				<button type="submit" form="form_{{id}}" name="method" value="delete" class="btn btn-danger"><i class="fa fa-remove"></i></button>
+                {%if loop.index0 == 0%}
+				<button type="button" class="btn btn-info" onclick="insertLine(this)"><i class="fa fa-plus"></i></button>
+				{%endif%}
+				<input type="hidden" form="form_{{id}}" name="id" value="{{id}}">
+				<form id="form_{{id}}" action="/edit_account" method="POST"></form>
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+<script>
+	function insertLine(ele) {
+		var timestamp = new Date().getTime();
+		var form_id = "form_" + timestamp;
+		var table = document.getElementById("fxrate_table");
+		var row = ele.parentElement.parentElement.cloneNode(true);
+		table.insertAdjacentElement('afterbegin', row);
+
+		var cell0 = row.children[0]; // 账户名
+		var cell1 = row.children[1]; // 币种
+		var cell2 = row.children[2]; // 活跃中
+		var cell3 = row.children[3]; // 操作
+
+		// 账户名
+		var input0 = cell0.firstElementChild;
+		input0.setAttribute("form", form_id);
+		input0.disabled = false;
+		input0.value = '';
+		// 币种
+		var input1 = cell1.firstElementChild;
+		input1.setAttribute("form", form_id);
+		input1.disabled = false;
+		input1.value = "RMB";
+		// 活跃中
+		var input2 = cell2.firstElementChild;
+		input2.setAttribute("form", form_id);
+		input2.disabled = false;
+		input2.value = true;
+
+		// 操作
+		$(cell3).find('button, input').attr('form', form_id);
+		$(cell3).find('input').attr('value', "");
+		cell3.lastElementChild.id = form_id;
+		cell3.firstElementChild.disabled = true;
+		cell3.firstElementChild.setAttribute("form", "");
+		cell3.children[1].disabled = false;
+	}
+</script>
+{% endblock %}

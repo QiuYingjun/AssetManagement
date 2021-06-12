@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}汇率输入{% endblock %}
+{% block edit_fxrate_active %} active {% endblock %}
+{% block body %}
+
+<table class="table table-sm text-center" id="fxrate_table">
+	<thead>
+		<tr>
+			<th scope="col">日期</th>
+			<th scope="col">汇率(日元/人民币)</th>
+			<th scope="col">货币</th>
+		</tr>
+	</thead>
+	<tbody>
+    	{%for id,date,rate,currency in fxrate_list %}
+		<tr>
+			<td><input class="form-control" disabled type="date" form="form_{{id}}" name="date" value="{{date}}"/></td>
+			<td><input class="form-control" disabled type="number" form="form_{{id}}" name="rate" value="{{rate}}" step="0.0001"/></td>
+			<td><input class="form-control" disabled type="text" form="form_{{id}}" name="currency" value="{{currency}}"/></td>
+			<td class="float-left">
+				<button onclick="$(this.parentElement.parentElement).find('button,input,select').prop('disabled', false);this.disabled=true;" class="btn btn-primary"><i class="fa fa-pencil"></i></button>
+				<button disabled type="submit" form="form_{{id}}" name="method" value="save" class="btn btn-success"><i class="fa fa-save"></i></button>
+				<button type="submit" form="form_{{id}}" name="method" value="delete" class="btn btn-danger"><i class="fa fa-remove"></i></button>
+                {%if loop.index0 == 0%}
+				<button type="button" class="btn btn-info" onclick="insertLine(this)"><i class="fa fa-plus"></i></button>
+				{%endif%}
+				<input type="hidden" form="form_{{id}}" name="id" value="{{id}}">
+				<form id="form_{{id}}" action="/edit_fxrate" method="POST"/>
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+<script>
+	function insertLine(ele) {
+		var timestamp = new Date().getTime();
+		var form_id = "form_" + timestamp;
+		var table = document.getElementById("fxrate_table");
+		var row = ele.parentElement.parentElement.cloneNode(true);
+		table.insertAdjacentElement('afterbegin', row);
+
+		var cell0 = row.children[0]; // 日期
+		var cell1 = row.children[1]; // 汇率
+		var cell2 = row.children[2]; // 币种
+		var cell3 = row.children[3]; // 操作
+
+		// 日期
+		var input0 = cell0.firstElementChild;
+		input0.setAttribute("form", form_id);
+		input0.disabled = false;
+		var today = new Date();
+		input0.value = today.toISOString().slice(0, 10);
+		// 汇率
+		var input1 = cell1.firstElementChild;
+		input1.setAttribute("form", form_id);
+		input1.disabled = false;
+		input1.value = "";
+		// 币种
+		var input2 = cell2.firstElementChild;
+		input2.setAttribute("form", form_id);
+		input2.disabled = false;
+		// 操作
+		$(cell3).find('button, input').attr('form', form_id);
+		$(cell3).find('input').attr('value', "");
+		cell3.lastElementChild.id = form_id;
+		cell3.firstElementChild.disabled = true;
+		cell3.firstElementChild.setAttribute("form", "");
+		cell3.children[1].disabled = false;
+	}
+</script>
+{% endblock %}
