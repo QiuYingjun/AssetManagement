@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask import Flask, render_template, request
-from py.model import session, Account, Asset, FXRate, engine
+from py.model import session, Account, Asset, FXRate, engine, Base
 import pandas as pd
 
 app = Flask(__name__, static_url_path='', static_folder='../static/', template_folder='../static/html/')
@@ -15,6 +15,7 @@ def index():
     LEFT JOIN fx_rate ON asset.date = fx_rate.date ORDER BY asset.date''', con=engine)
     df['rate'].fillna(method='backfill', inplace=True)
     df['fx_currency'].fillna('JPY', inplace=True)
+
     df['rmb'] = df['amount']
     a = df['account_currency'] == df['fx_currency']
     df.loc[a, 'rmb'] = df.loc[a, 'amount'] / df.loc[a, 'rate']
@@ -36,8 +37,9 @@ def index():
 
 
 @app.route('/edit_asset', methods=['GET', 'POST'])
-def edit_asset():
-    print(request.form)
+@app.route('/edit_asset/', methods=['GET', 'POST'])
+@app.route('/edit_asset/<int:page>/', methods=['GET', 'POST'])
+def edit_asset(page=1):
     if request.method == 'POST':
         if request.form['method'] == 'save':
             id = int(request.form['id']) if request.form['id'] != '' else -1
@@ -60,12 +62,28 @@ def edit_asset():
                 session.commit()
     accounts = {a.id: (a.name.encode('utf8').decode('utf8'), a.is_active) for a in session.query(Account).all()}
     asset_list = [(a.id, a.date.strftime("%Y-%m-%d"), a.accountId, round(a.amount, 2)) for a in
-                  session.query(Asset).order_by(Asset.date.desc(), Asset.id.desc()).all()]
-    return render_template('edit_asset.html', asset_list=asset_list, accounts=accounts)
+                  session.query(Asset).order_by(Asset.date.desc(), Asset.id.desc()).limit(16).offset(
+                      (page - 1) * 16).all()]
+    current_page, total_page = get_page(Asset, page)
+    return render_template('edit_asset.html', asset_list=asset_list, accounts=accounts,
+                           current_page=current_page, total_page=total_page)
+
+
+def get_page(m: Base, page):
+    all_count = session.query(m).count()
+    total_page = int(all_count / 16) + (1 if all_count % 16 > 0 else 0)
+    current_page = page
+    if page < 1:
+        current_page = 1
+    elif page > total_page:
+        current_page = total_page
+    return current_page, total_page
 
 
 @app.route('/edit_fxrate', methods=['GET', 'POST'])
-def edit_fxrate():
+@app.route('/edit_fxrate/', methods=['GET', 'POST'])
+@app.route('/edit_fxrate/<int:page>/', methods=['GET', 'POST'])
+def edit_fxrate(page=1):
     print(request.form)
     if request.method == 'POST':
         if request.form['method'] == 'save':
@@ -88,12 +106,16 @@ def edit_fxrate():
                 session.query(FXRate).filter(FXRate.id == int(id)).delete()
                 session.commit()
     fxrate_list = [(fx.id, fx.date, fx.rate, fx.currency) for fx in
-                   session.query(FXRate).order_by(FXRate.date.desc()).all()]
-    return render_template('edit_fxrate.html', fxrate_list=fxrate_list)
+                   session.query(FXRate).order_by(FXRate.date.desc()).limit(16).offset((page - 1) * 16).all()]
+    current_page, total_page = get_page(FXRate, page)
+    return render_template('edit_fxrate.html', fxrate_list=fxrate_list,
+                           current_page=current_page, total_page=total_page)
 
 
 @app.route('/edit_account', methods=['GET', 'POST'])
-def edit_account():
+@app.route('/edit_account/', methods=['GET', 'POST'])
+@app.route('/edit_account/<int:page>', methods=['GET', 'POST'])
+def edit_account(page=1):
     print(request.form)
     if request.method == 'POST':
         id = int(request.form['id']) if request.form['id'] != '' else -1
@@ -115,8 +137,10 @@ def edit_account():
                 session.query(Account).filter(Account.id == id).delete()
                 session.commit()
     account_list = [(account.id, account.name, account.currency, account.is_active) for account in
-                    session.query(Account).order_by(Account.id.asc()).all()]
-    return render_template('edit_account.html', account_list=account_list)
+                    session.query(Account).order_by(Account.id.asc()).limit(16).offset((page - 1) * 16).all()]
+    current_page, total_page = get_page(Account, page)
+    return render_template('edit_account.html', account_list=account_list, current_page=current_page,
+                           total_page=total_page)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,10 @@
 {% block title %}账户管理{% endblock %}
 {% block edit_account_active %} active {% endblock %}
 {% block body %}
-<div style="overflow: auto; height: 800px;">
+
+{% import 'page_bar.html' as page_bar%}
+{{ page_bar.create('edit_account', total_page, current_page) }}
+
 <table class="table table-sm text-center" id="fxrate_table">
 	<thead class="thead-dark">
 		<tr>
@@ -35,13 +38,12 @@
 				<button type="button" class="btn btn-info" onclick="insertLine(this)"><i class="fa fa-plus"></i></button>
 				{%endif%}
 				<input type="hidden" form="form_{{id}}" name="id" value="{{id}}">
-				<form id="form_{{id}}" action="/edit_account" method="POST"></form>
+				<form id="form_{{id}}" action="/edit_account/{{current_page}}/" method="POST"></form>
 			</td>
 		</tr>
 	{% endfor %}
 	</tbody>
 </table>
-</div>
 <script>
 	function insertLine(ele) {
 		var timestamp = new Date().getTime();
