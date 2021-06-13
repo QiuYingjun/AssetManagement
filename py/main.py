@@ -9,14 +9,28 @@ app = Flask(__name__, static_url_path='', static_folder='../static/', template_f
 
 @app.route('/', methods=['GET'])
 def index():
-    df = pd.read_sql_query('SELECT * FROM asset_total ORDER BY date', con=engine, index_col='date')
+    df = pd.read_sql_query('''
+    SELECT asset.date, account.name, amount,account.currency as account_currency,rate,fx_rate.currency as fx_currency
+    FROM asset LEFT JOIN account ON asset.accountId = account.id
+    LEFT JOIN fx_rate ON asset.date = fx_rate.date ORDER BY asset.date''', con=engine)
+    df['rate'].fillna(method='backfill', inplace=True)
+    df['fx_currency'].fillna('JPY', inplace=True)
+    df['rmb'] = df['amount']
+    a = df['account_currency'] == df['fx_currency']
+    df.loc[a, 'rmb'] = df.loc[a, 'amount'] / df.loc[a, 'rate']
 
-    fxrate_list = session.query(FXRate).order_by(FXRate.date.desc()).limit(1).all()
+    df['jpy'] = df['amount']
+    b = df['account_currency'] != df['fx_currency']
+    df.loc[b, 'jpy'] = df.loc[b, 'amount'] * df.loc[b, 'rate']
+
+    total_df = df.groupby('date').agg({'jpy': 'sum', 'rmb': 'sum', 'rate': 'mean'})
+
     echartsOption = {'title': '总资产',
-                     'xAxis': df.index.tolist(),
-                     'startValue': df.index[-10],
-                     'data': df['sum(rmb)'].round(2).tolist(),
-                     'fxrate': fxrate_list[0].rate
+                     'xAxis': total_df.index.tolist(),
+                     'startValue': total_df.index[-10],
+                     'data': total_df['rmb'].round(2).tolist(),
+                     'data_jpy': total_df['jpy'].round(2).tolist(),
+                     'fxrate': total_df['rate']
                      }
     return render_template('index.html', echartsOption=echartsOption)
 
@@ -46,7 +60,7 @@ def edit_asset():
                 session.commit()
     accounts = {a.id: (a.name.encode('utf8').decode('utf8'), a.is_active) for a in session.query(Account).all()}
     asset_list = [(a.id, a.date.strftime("%Y-%m-%d"), a.accountId, round(a.amount, 2)) for a in
-                  session.query(Asset).order_by(Asset.date.desc(), Asset.id.desc()).limit(50).all()]
+                  session.query(Asset).order_by(Asset.date.desc(), Asset.id.desc()).all()]
     return render_template('edit_asset.html', asset_list=asset_list, accounts=accounts)
 
 
@@ -74,7 +88,7 @@ def edit_fxrate():
                 session.query(FXRate).filter(FXRate.id == int(id)).delete()
                 session.commit()
     fxrate_list = [(fx.id, fx.date, fx.rate, fx.currency) for fx in
-                   session.query(FXRate).order_by(FXRate.date.desc()).limit(10).all()]
+                   session.query(FXRate).order_by(FXRate.date.desc()).all()]
     return render_template('edit_fxrate.html', fxrate_list=fxrate_list)
 
 
@@ -88,7 +102,7 @@ def edit_account():
             is_active = 'is_active' in request.form
             currency = request.form['currency']
             account = Account()
-            account_list = session.query(Account).filter(Account.id == id).limit(1).all()
+            account_list = session.query(Account).filter(Account.id == id).all()
             if account_list:
                 account = account_list[0]
             account.name = name
@@ -103,6 +117,7 @@ def edit_account():
     account_list = [(account.id, account.name, account.currency, account.is_active) for account in
                     session.query(Account).order_by(Account.id.asc()).all()]
     return render_template('edit_account.html', account_list=account_list)
+
 
 if __name__ == "__main__":
     app.run(port=80, host='127.0.0.1', debug=True)

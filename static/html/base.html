@@ -2,27 +2,33 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <link href="html/dollar.png" type="image/png" rel="icon">
-
+    <link href="dollar.png" type="image/png" rel="icon">
     <title>{% block title %}{% endblock %}</title>
-<!--    <script src="js/echarts/echarts.min.js"></script>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.2/echarts.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<!--    <script src="js/jquery-3.4.1.slim.min.js"></script>-->
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" crossorigin="anonymous"></script>
-<!--    <script src="js/popper.min.js"></script>-->
-<!--    <script src="js/bootstrap/bootstrap.min.js"></script>-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="undefined" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
-
-    <!--    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"/>-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="undefined" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
+    <style>
+        table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .container {
+            padding-top: 100px;
+        }
+    </style>
 </head>
-
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
         <a class="navbar-brand" href="#">资产统计</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>

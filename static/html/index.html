@@ -8,49 +8,92 @@
     var option = {
         title: {
             text: '{{echartsOption.title}}',
-            subtext: '最新：{{echartsOption.xAxis[-1]}}\t人民币：{{echartsOption.data[-1]}}\t日元：{{(echartsOption.data[-1] * echartsOption.fxrate)|round(2) }}'
+            subtext: '截至{{echartsOption.xAxis[-1]}}\t：{{echartsOption.data[-1]}}元\t(={{echartsOption.data_jpy[-1]|round(2)}}円)',
+            left: 'center'
         },
         tooltip: {},
         legend: {
-            data:['人民币']
+            data:['人民币', '日元'],
+            right:'10%',
+            bottom:'20%',
+            orient:'horizontal'
         },
         xAxis: {
             data: {{echartsOption.xAxis|tojson}}
         },
-        yAxis: {},
+        yAxis: [
+            {
+                type: 'value',
+                name: '人民币',
+                position: 'left',
+                axisLine: {
+                    show: true,
+                },
+                axisLabel: {
+                    formatter: '{value} 元'
+                }
+            },
+            {
+                type: 'value',
+                name: '日元',
+                position: 'right',
+                axisLine: {
+                    show: true,
+                },
+                axisLabel: {
+                    formatter: '{value} 円'
+                }
+            },
+        ],
         dataZoom: [
             { startValue: '{{echartsOption.startValue}}' },
             { type: 'inside' },
             {
                 type: 'slider',
                 show: true,
-                yAxisIndex: [0],
+                yAxisIndex: [0,1],
                 left: '5%',
                 start:0
             }
         ],
         series: [{
-            name: '人民币',
-            type: 'line',
-            data: {{echartsOption.data}}
-        }]
+                name: '人民币',
+                type: 'line',
+                data: {{echartsOption.data}},
+                yAxisIndex:0
+            },
+            {
+                name: '日元',
+                type: 'line',
+                data: {{echartsOption.data_jpy}},
+                yAxisIndex:1
+
+            }
+        ]
     };
     myChart.setOption(option);
+
 </script>
+    <div style="overflow: auto; height: 400px;">
     <table class="table table-sm text-center">
-        <thead>
+        <thead class="thead-dark">
             <tr>
                 <th scope="col">日期</th>
-                <th scope="col">元</th>
+                <th scope="col">人民币</th>
+                <th scope="col">日元</th>
+                <th scope="col">汇率</th>
             </tr>
         </thead>
-        <tbody>
-            {% for asset in echartsOption.data|reverse %}
+        <tbody >
+            {% for i in range(0, echartsOption.data|length) %}
                 <tr>
                     <th scope="row">{{echartsOption.xAxis[-loop.index]}}</th>
-                    <td>{{asset}}</td>
+                    <td>{{echartsOption.data[-loop.index]}}</td>
+                    <td>{{echartsOption.data_jpy[-loop.index]}}</td>
+                    <td>{{echartsOption.fxrate[-loop.index]|round(4)}}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 {% endblock %}

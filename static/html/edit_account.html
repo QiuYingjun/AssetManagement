@@ -2,9 +2,9 @@
 {% block title %}账户管理{% endblock %}
 {% block edit_account_active %} active {% endblock %}
 {% block body %}
-
+<div style="overflow: auto; height: 800px;">
 <table class="table table-sm text-center" id="fxrate_table">
-	<thead>
+	<thead class="thead-dark">
 		<tr>
 			<th scope="col">账户名</th>
 			<th scope="col">币种</th>
@@ -20,7 +20,7 @@
 			<td class="align-middle">
 				<input data-toggle="toggle" data-size="xs" disabled id="checkbox_{{id}}"  type="checkbox" form="form_{{id}}" name="is_active" {%if is_active%}checked{%endif%}/>
 			</td>
-			<td class="float-left">
+			<td>
 				<button onclick="enable(this)" class="btn btn-primary"><i class="fa fa-pencil"></i></button>
 				<script>
 					function enable(ele) {
@@ -41,6 +41,7 @@
 	{% endfor %}
 	</tbody>
 </table>
+</div>
 <script>
 	function insertLine(ele) {
 		var timestamp = new Date().getTime();

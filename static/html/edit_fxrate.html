@@ -2,13 +2,15 @@
 {% block title %}汇率输入{% endblock %}
 {% block edit_fxrate_active %} active {% endblock %}
 {% block body %}
+<div style="overflow: auto; height: 800px;">
 
 <table class="table table-sm text-center" id="fxrate_table">
-	<thead>
+	<thead class="thead-dark">
 		<tr>
 			<th scope="col">日期</th>
 			<th scope="col">汇率(日元/人民币)</th>
-			<th scope="col">货币</th>
+			<th scope="col">币种</th>
+			<th scope="col">操作</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -17,7 +19,7 @@
 			<td><input class="form-control" disabled type="date" form="form_{{id}}" name="date" value="{{date}}"/></td>
 			<td><input class="form-control" disabled type="number" form="form_{{id}}" name="rate" value="{{rate}}" step="0.0001"/></td>
 			<td><input class="form-control" disabled type="text" form="form_{{id}}" name="currency" value="{{currency}}"/></td>
-			<td class="float-left">
+			<td>
 				<button onclick="$(this.parentElement.parentElement).find('button,input,select').prop('disabled', false);this.disabled=true;" class="btn btn-primary"><i class="fa fa-pencil"></i></button>
 				<button disabled type="submit" form="form_{{id}}" name="method" value="save" class="btn btn-success"><i class="fa fa-save"></i></button>
 				<button type="submit" form="form_{{id}}" name="method" value="delete" class="btn btn-danger"><i class="fa fa-remove"></i></button>
@@ -25,12 +27,13 @@
 				<button type="button" class="btn btn-info" onclick="insertLine(this)"><i class="fa fa-plus"></i></button>
 				{%endif%}
 				<input type="hidden" form="form_{{id}}" name="id" value="{{id}}">
-				<form id="form_{{id}}" action="/edit_fxrate" method="POST"/>
+				<form id="form_{{id}}" action="/edit_fxrate" method="POST"></form>
 			</td>
 		</tr>
 	{% endfor %}
 	</tbody>
 </table>
+</div>
 <script>
 	function insertLine(ele) {
 		var timestamp = new Date().getTime();
