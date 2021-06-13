@@ -1,6 +1,9 @@
 from sqlalchemy import Column, String, create_engine, Integer, Date, Float, ForeignKey, MetaData, text, Boolean
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
+import os
+if not os.path.exists('../data'):
+    os.makedirs('../data')
 
 engine = create_engine('sqlite:///../data/asset.db', echo=True, connect_args={"check_same_thread": False})
 DBSession = sessionmaker(bind=engine)

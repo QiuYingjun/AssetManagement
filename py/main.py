@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from flask import Flask, render_template, request
 from py.model import session, Account, Asset, FXRate, engine, Base
@@ -23,16 +23,26 @@ def index():
     df['jpy'] = df['amount']
     b = df['account_currency'] != df['fx_currency']
     df.loc[b, 'jpy'] = df.loc[b, 'amount'] * df.loc[b, 'rate']
-
-    total_df = df.groupby('date').agg({'jpy': 'sum', 'rmb': 'sum', 'rate': 'mean'})
-
-    echartsOption = {'title': '总资产',
-                     'xAxis': total_df.index.tolist(),
-                     'startValue': total_df.index[-10],
-                     'data': total_df['rmb'].round(2).tolist(),
-                     'data_jpy': total_df['jpy'].round(2).tolist(),
-                     'fxrate': total_df['rate']
-                     }
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    echartsOption = {
+        'title': '总资产',
+        'xAxis': [today],
+        'startValue': today,
+        'data': [0],
+        'data_jpy': [0],
+        'fxrate': [0]
+    }
+    if not df.empty:
+        total_df = df.groupby('date').agg({'jpy': 'sum', 'rmb': 'sum', 'rate': 'mean'})
+        start_value = 10 if total_df.shape[0] > 10 else total_df.shape[0]
+        
+        echartsOption = {'title': '总资产',
+                         'xAxis': total_df.index.tolist(),
+                         'startValue': total_df.index[-start_value],
+                         'data': total_df['rmb'].round(2).tolist(),
+                         'data_jpy': total_df['jpy'].round(2).tolist(),
+                         'fxrate': total_df['rate']
+                         }
     return render_template('index.html', echartsOption=echartsOption)
 
 
@@ -40,10 +50,11 @@ def index():
 @app.route('/edit_asset/', methods=['GET', 'POST'])
 @app.route('/edit_asset/<int:page>/', methods=['GET', 'POST'])
 def edit_asset(page=1):
+    print(request)
     if request.method == 'POST':
+        id = int(request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
         if request.form['method'] == 'save':
-            id = int(request.form['id']) if request.form['id'] != '' else -1
-            date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+            date = datetime.datetime.strptime(request.form['date'], '%Y-%m-%d').date()
             accountId = int(request.form['accountId'])
             amount = float(eval(request.form['amount'])) if request.form['amount'] != '' else 0
             asset = Asset()
@@ -56,14 +67,15 @@ def edit_asset(page=1):
             session.add(asset)
             session.commit()
         elif request.form['method'] == 'delete':
-            id = request.form['id']
-            if id != '':
-                session.query(Asset).filter(Asset.id == int(id)).delete()
+            if id > -1:
+                session.query(Asset).filter(Asset.id == id).delete()
                 session.commit()
     accounts = {a.id: (a.name.encode('utf8').decode('utf8'), a.is_active) for a in session.query(Account).all()}
     asset_list = [(a.id, a.date.strftime("%Y-%m-%d"), a.accountId, round(a.amount, 2)) for a in
                   session.query(Asset).order_by(Asset.date.desc(), Asset.id.desc()).limit(16).offset(
                       (page - 1) * 16).all()]
+    if not asset_list:
+        asset_list.append((None, datetime.date.today(), 0, 0))
     current_page, total_page = get_page(Asset, page)
     return render_template('edit_asset.html', asset_list=asset_list, accounts=accounts,
                            current_page=current_page, total_page=total_page)
@@ -86,9 +98,9 @@ def get_page(m: Base, page):
 def edit_fxrate(page=1):
     print(request.form)
     if request.method == 'POST':
+        id = int(request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
         if request.form['method'] == 'save':
-            id = int(request.form['id']) if request.form['id'] != '' else -1
-            date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+            date = datetime.datetime.strptime(request.form['date'], '%Y-%m-%d').date()
             rate = float(request.form['rate']) if request.form['rate'] != '' else 0
             currency = request.form['currency']
             fx = FXRate()
@@ -101,12 +113,14 @@ def edit_fxrate(page=1):
             session.add(fx)
             session.commit()
         elif request.form['method'] == 'delete':
-            id = request.form['id']
-            if id != '':
-                session.query(FXRate).filter(FXRate.id == int(id)).delete()
+            if id > -1:
+                session.query(FXRate).filter(FXRate.id == id).delete()
                 session.commit()
     fxrate_list = [(fx.id, fx.date, fx.rate, fx.currency) for fx in
                    session.query(FXRate).order_by(FXRate.date.desc()).limit(16).offset((page - 1) * 16).all()]
+    if not fxrate_list:
+        fx = FXRate()
+        fxrate_list.append((fx.id, datetime.date.today(), 1, 'RMB'))
     current_page, total_page = get_page(FXRate, page)
     return render_template('edit_fxrate.html', fxrate_list=fxrate_list,
                            current_page=current_page, total_page=total_page)
@@ -114,11 +128,11 @@ def edit_fxrate(page=1):
 
 @app.route('/edit_account', methods=['GET', 'POST'])
 @app.route('/edit_account/', methods=['GET', 'POST'])
-@app.route('/edit_account/<int:page>', methods=['GET', 'POST'])
+@app.route('/edit_account/<int:page>/', methods=['GET', 'POST'])
 def edit_account(page=1):
     print(request.form)
     if request.method == 'POST':
-        id = int(request.form['id']) if request.form['id'] != '' else -1
+        id = int(request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
         if request.form['method'] == 'save':
             name = request.form['name']
             is_active = 'is_active' in request.form
@@ -138,6 +152,8 @@ def edit_account(page=1):
                 session.commit()
     account_list = [(account.id, account.name, account.currency, account.is_active) for account in
                     session.query(Account).order_by(Account.id.asc()).limit(16).offset((page - 1) * 16).all()]
+    if not account_list:
+        account_list.append((None, '支付宝', 'RMB', False))
     current_page, total_page = get_page(Account, page)
     return render_template('edit_account.html', account_list=account_list, current_page=current_page,
                            total_page=total_page)
