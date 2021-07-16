@@ -5,7 +5,8 @@ import os
 if not os.path.exists('../data'):
     os.makedirs('../data')
 
-engine = create_engine('sqlite:///../data/asset.db', echo=True, connect_args={"check_same_thread": False})
+engine = create_engine('sqlite:///../data/asset.db', echo=True,
+                       connect_args={"check_same_thread": False})
 DBSession = sessionmaker(bind=engine)
 Base = declarative_base()
 session = DBSession()

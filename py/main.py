@@ -4,7 +4,8 @@ from flask import Flask, render_template, request
 from py.model import session, Account, Asset, FXRate, engine, Base
 import pandas as pd
 
-app = Flask(__name__, static_url_path='', static_folder='../static/', template_folder='../static/html/')
+app = Flask(__name__, static_url_path='', static_folder='../static/',
+            template_folder='../static/html/')
 
 
 @app.route('/', methods=['GET'])
@@ -33,9 +34,10 @@ def index():
         'fxrate': [0]
     }
     if not df.empty:
-        total_df = df.groupby('date').agg({'jpy': 'sum', 'rmb': 'sum', 'rate': 'mean'})
+        total_df = df.groupby('date').agg(
+            {'jpy': 'sum', 'rmb': 'sum', 'rate': 'mean'})
         start_value = 10 if total_df.shape[0] > 10 else total_df.shape[0]
-        
+
         echartsOption = {'title': '总资产',
                          'xAxis': total_df.index.tolist(),
                          'startValue': total_df.index[-start_value],
@@ -52,13 +54,17 @@ def index():
 def edit_asset(page=1):
     print(request)
     if request.method == 'POST':
-        id = int(request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
+        id = int(
+            request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
         if request.form['method'] == 'save':
-            date = datetime.datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+            date = datetime.datetime.strptime(
+                request.form['date'], '%Y-%m-%d').date()
             accountId = int(request.form['accountId'])
-            amount = float(eval(request.form['amount'])) if request.form['amount'] != '' else 0
+            amount = float(
+                eval(request.form['amount'])) if request.form['amount'] != '' else 0
             asset = Asset()
-            asset_list = session.query(Asset).filter(Asset.id == id).limit(1).all()
+            asset_list = session.query(Asset).filter(
+                Asset.id == id).limit(1).all()
             if asset_list:
                 asset = asset_list[0]
             asset.date = date
@@ -70,7 +76,8 @@ def edit_asset(page=1):
             if id > -1:
                 session.query(Asset).filter(Asset.id == id).delete()
                 session.commit()
-    accounts = {a.id: (a.name.encode('utf8').decode('utf8'), a.is_active) for a in session.query(Account).all()}
+    accounts = {a.id: (a.name.encode('utf8').decode('utf8'), a.is_active)
+                for a in session.query(Account).all()}
     asset_list = [(a.id, a.date.strftime("%Y-%m-%d"), a.accountId, round(a.amount, 2)) for a in
                   session.query(Asset).order_by(Asset.date.desc(), Asset.id.desc()).limit(16).offset(
                       (page - 1) * 16).all()]
@@ -98,13 +105,17 @@ def get_page(m: Base, page):
 def edit_fxrate(page=1):
     print(request.form)
     if request.method == 'POST':
-        id = int(request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
+        id = int(
+            request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
         if request.form['method'] == 'save':
-            date = datetime.datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-            rate = float(request.form['rate']) if request.form['rate'] != '' else 0
+            date = datetime.datetime.strptime(
+                request.form['date'], '%Y-%m-%d').date()
+            rate = float(request.form['rate']
+                         ) if request.form['rate'] != '' else 0
             currency = request.form['currency']
             fx = FXRate()
-            fx_list = session.query(FXRate).filter(FXRate.id == id).limit(1).all()
+            fx_list = session.query(FXRate).filter(
+                FXRate.id == id).limit(1).all()
             if fx_list:
                 fx = fx_list[0]
             fx.date = date
@@ -132,13 +143,15 @@ def edit_fxrate(page=1):
 def edit_account(page=1):
     print(request.form)
     if request.method == 'POST':
-        id = int(request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
+        id = int(
+            request.form['id']) if request.form['id'] != '' and request.form['id'] != 'None' else -1
         if request.form['method'] == 'save':
             name = request.form['name']
             is_active = 'is_active' in request.form
             currency = request.form['currency']
             account = Account()
-            account_list = session.query(Account).filter(Account.id == id).all()
+            account_list = session.query(
+                Account).filter(Account.id == id).all()
             if account_list:
                 account = account_list[0]
             account.name = name
@@ -160,4 +173,4 @@ def edit_account(page=1):
 
 
 if __name__ == "__main__":
-    app.run(port=80, host='127.0.0.1', debug=True)
+    app.run(port=5000, host='127.0.0.1', debug=True)

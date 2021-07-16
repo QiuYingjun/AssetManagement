@@ -37,7 +37,8 @@ def write_asset():
         for account in accounts:
             amount = df.at[i, account]
             if not pd.isna(amount) and abs(amount) > 0:
-                asset = Asset(date=df.at[i, '日期'], accountId=accounts[account], amount=amount)
+                asset = Asset(
+                    date=df.at[i, '日期'], accountId=accounts[account], amount=amount)
                 session.add(asset)
     session.commit()
 
@@ -46,4 +47,3 @@ if __name__ == '__main__':
     write_account()
     write_fxrate()
     write_asset()
-
